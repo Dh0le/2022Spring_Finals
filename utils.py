@@ -83,7 +83,134 @@ def AppendUnitPrice(data: pd.DataFrame):
         unitPrice = priceTotal / area
         data.loc[index, 'Unit Price'] = unitPrice
 
+def price_change_rate_by_year(df: pd.DataFrame, boro: str):
+    res_df = pd.DataFrame(columns=['Borough', 'NBH', 'Overall_Change_Rate'])
+    boro_change_rate = get_change_rate(df.loc[df['Sale Date'].str.contains('2012')]['Unit Price'].mean(), df.loc[df['Sale Date'].str.contains('2019')]['Unit Price'].mean())
+    for nbh in df['Neighborhood'].unique():
+        this_nbh = df[df['Neighborhood'] == nbh]  # number of collisions or crimes in this neighborhood
+        data = [boro, nbh]
 
+        # get the change rate of this year
+        change_rate = get_change_rate(this_nbh.loc[this_nbh['Sale Date'].str.contains('2012')]['Unit Price'].mean(), this_nbh.loc[this_nbh['Sale Date'].str.contains('2019')]['Unit Price'].mean()) - boro_change_rate
+        data.append(change_rate)
+
+        # from the starting year to the end year
+        for i in range(2012, 2019):
+            year_change_rate = get_change_rate(this_nbh.loc[this_nbh['Sale Date'].str.contains(str(i))]['Unit Price'].mean(), this_nbh.loc[this_nbh['Sale Date'].str.contains(str(i + 1))]['Unit Price'].mean()) - boro_change_rate
+
+            # the column name
+            label = str(i) + '-' + str(i + 1)
+            if label not in res_df.columns:
+                res_df.insert(res_df.shape[1], label, np.nan)
+            for j in range(len(data), list(res_df.columns).index(label) + 1):
+                if j == list(res_df.columns).index(label):
+                    data.append(year_change_rate)
+                else: data.append(np.nan)
+        
+        # add data to result dataframe
+        if res_df.empty:
+            res_df.loc[0] = data
+        else: res_df.loc[res_df.index.max() + 1] = data
+    return res_df
+
+def change_rate_by_year(df: pd.DataFrame, boundary: int):
+    res_df = pd.DataFrame(columns=['Borough', 'NBH', 'Overall_Change_Rate'])
+    for boro in df['Borough'].unique():
+        this_boro = df[df['Borough'] == boro]  # number of collisions or crimes in this borough
+        boro_change_rate = get_change_rate(this_boro.loc[this_boro['Year'] == 2012].iloc[:, 2].mean(), this_boro.loc[this_boro['Year'] == 2019].iloc[:, 2].mean())
+        for nbh in this_boro['NBH'].unique():
+            this_nbh = this_boro[this_boro['NBH'] == nbh]  # number of collisions or crimes in this neighborhood
+            
+            # we set a boundary to choose data because if the number is too small, the change rate would be too high to have realistic meanings
+            if (this_nbh.iloc[:, [2]].max() < boundary).bool():
+                break
+            data = [boro, nbh]
+
+            # get the change rate of this year
+            change_rate = get_change_rate(this_nbh.loc[this_nbh.index[0]][2], this_nbh.loc[this_nbh.index[-1]][2]) - boro_change_rate
+            data.append(change_rate)
+
+            # from the starting year to the end year
+            for i in range(this_nbh.index[0], this_nbh.index[-1]):
+                year_change_rate = get_change_rate(this_nbh.loc[i][2], this_nbh.loc[i + 1][2]) - boro_change_rate
+
+                # the column name
+                label = str(this_nbh.loc[i][3]) + '-' + str(this_nbh.loc[i + 1][3])
+                if label not in res_df.columns:
+                    res_df.insert(res_df.shape[1], label, np.nan)
+                for j in range(len(data), list(res_df.columns).index(label) + 1):
+                    if j == list(res_df.columns).index(label):
+                        data.append(year_change_rate)
+                    else: data.append(np.nan)
+            
+            # add data to result dataframe
+            if res_df.empty:
+                res_df.loc[0] = data
+            else: res_df.loc[res_df.index.max() + 1] = data
+    return res_df
+
+def find_tar_nbh(df: pd.DataFrame):
+    target_nbh = pd.DataFrame(columns=df.columns)
+    for boro in df['Borough'].unique():
+        this_boro = df[df['Borough'] == boro].copy()
+
+        # sort the change rate
+        this_boro.sort_values(by=['Overall_Change_Rate'], inplace=True)
+        this_boro = this_boro.reset_index()
+        
+        # for each borough, the target neighborhoods are whose crime rate and collision rate increased the most and decreased the most
+        if target_nbh.empty:
+            target_nbh.loc[0] = this_boro.iloc[0]
+            target_nbh.loc[1] = this_boro.iloc[-1]
+        else:
+            target_nbh.loc[target_nbh.index.max() + 1] = this_boro.iloc[0]
+            target_nbh.loc[target_nbh.index.max() + 1] = this_boro.iloc[-1]
+    return target_nbh
+
+def get_change_rate(start: int, end: int):
+    return (end - start) / start
+
+def numCollisions(collisionData_NBH: pd.DataFrame):
+    nbh_collisions = pd.DataFrame(columns=['Borough', 'NBH', 'Collisions', 'Year'])  # the number of crimes in each neighborhood from 2012 to 2019
+    collision_boros = collisionData_NBH['BOROUGH'].unique()
+    for boro in collision_boros:
+        collision_this_boro = collisionData_NBH[collisionData_NBH['BOROUGH'] == boro]  # collisions in this borough
+        collision_nbhs = collision_this_boro['NBH'].unique()
+        for nbh in collision_nbhs:
+            collision_this_nbh = collision_this_boro[collision_this_boro['NBH'] == nbh]  # collisions in this neighborhood
+            # add data from 2012 to 2019
+            for i in range(2012, 2020):
+                num = get_collisiongs_year(collision_this_nbh, str(i))
+                # the data in 2012 starts in July. We should mutiply number of collisions in this year with 2 to estimate the whole year.
+                if i == 2012:
+                    num *= 2
+                if nbh_collisions.empty:
+                    nbh_collisions.loc[0] = [boro, nbh, num, i]
+                else: nbh_collisions.loc[nbh_collisions.index.max() + 1] = [boro, nbh, num, i]
+    return nbh_collisions
+
+def get_collisiongs_year(df: pd.DataFrame, year: str):
+    mask = (df['CRASH DATE'] >= year + '-01-01') & (df['CRASH DATE'] <= year + '-12-31')
+    return len(df.loc[mask])
+
+def numCrimes(crimeData_NBH: pd.DataFrame):
+    nbh_crimes = pd.DataFrame(columns=['Borough', 'NBH', 'Crimes', 'Year'])  # the number of crimes in each neighborhood from 2012 to 2019
+    crime_boros = crimeData_NBH['ARREST_BORO'].unique()
+    for boro in crime_boros:
+        crime_this_boro = crimeData_NBH[crimeData_NBH['ARREST_BORO'] == boro]  # crimes in this borough
+        crime_nbhs = crime_this_boro['NBH'].unique()
+        for nbh in crime_nbhs:
+            crime_this_nbh = crime_this_boro[crime_this_boro['NBH'] == nbh]  # crimes in this neighborhood
+            # add data from 2012 to 2019
+            for i in range(2012, 2020):
+                if nbh_crimes.empty:
+                    nbh_crimes.loc[0] = [boro, nbh, get_crimes_year(crime_this_nbh, str(i)), i]
+                else: nbh_crimes.loc[nbh_crimes.index.max() + 1] = [boro, nbh, get_crimes_year(crime_this_nbh, str(i)), i]
+    return nbh_crimes
+
+def get_crimes_year(df: pd.DataFrame, year: str):
+    mask = (df['ARREST_DATE'] >= year + '-01-01') & (df['ARREST_DATE'] <= year + '-12-31')
+    return len(df.loc[mask])
 
 
 
