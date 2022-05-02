@@ -96,16 +96,14 @@ def price_change_rate_by_year(df: pd.DataFrame, boro: str):
 
         # from the starting year to the end year
         for i in range(2012, 2019):
-            year_change_rate = get_change_rate(this_nbh.loc[this_nbh['Sale Date'].str.contains(str(i))]['Unit Price'].mean(), this_nbh.loc[this_nbh['Sale Date'].str.contains(str(i + 1))]['Unit Price'].mean()) - boro_change_rate
+            boro_change_rate_this_year = get_change_rate(df.loc[df['Sale Date'].str.contains(str(i))]['Unit Price'].mean(), df.loc[df['Sale Date'].str.contains(str(i + 1))]['Unit Price'].mean())
+            year_change_rate = get_change_rate(this_nbh.loc[this_nbh['Sale Date'].str.contains(str(i))]['Unit Price'].mean(), this_nbh.loc[this_nbh['Sale Date'].str.contains(str(i + 1))]['Unit Price'].mean()) - boro_change_rate_this_year
 
             # the column name
             label = str(i) + '-' + str(i + 1)
             if label not in res_df.columns:
                 res_df.insert(res_df.shape[1], label, np.nan)
-            for j in range(len(data), list(res_df.columns).index(label) + 1):
-                if j == list(res_df.columns).index(label):
-                    data.append(year_change_rate)
-                else: data.append(np.nan)
+            data.append(year_change_rate)
         
         # add data to result dataframe
         if res_df.empty:
@@ -115,9 +113,12 @@ def price_change_rate_by_year(df: pd.DataFrame, boro: str):
 
 def change_rate_by_year(df: pd.DataFrame, boundary: int):
     res_df = pd.DataFrame(columns=['Borough', 'NBH', 'Overall_Change_Rate'])
+    type = df.columns[2]
+    df.iloc[:, 2:] = df.iloc[:, 2:].apply(pd.to_numeric)
     for boro in df['Borough'].unique():
         this_boro = df[df['Borough'] == boro]  # number of collisions or crimes in this borough
-        boro_change_rate = get_change_rate(this_boro.loc[this_boro['Year'] == 2012].iloc[:, 2].mean(), this_boro.loc[this_boro['Year'] == 2019].iloc[:, 2].mean())
+        boro_change_rate = get_change_rate(this_boro.loc[this_boro['Year']==2012].iloc[:, 2].mean(), this_boro.loc[this_boro['Year']==2019].iloc[:, 2].mean())
+        # print(boro_change_rate)
         for nbh in this_boro['NBH'].unique():
             this_nbh = this_boro[this_boro['NBH'] == nbh]  # number of collisions or crimes in this neighborhood
             
@@ -131,17 +132,16 @@ def change_rate_by_year(df: pd.DataFrame, boundary: int):
             data.append(change_rate)
 
             # from the starting year to the end year
-            for i in range(this_nbh.index[0], this_nbh.index[-1]):
-                year_change_rate = get_change_rate(this_nbh.loc[i][2], this_nbh.loc[i + 1][2]) - boro_change_rate
+            for i in range(2012, 2019):
+                boro_change_rate_year = get_change_rate(this_boro.loc[this_boro['Year']==i].iloc[:, 2].mean(), this_boro.loc[this_boro['Year']==i+1].iloc[:, 2].mean())
+                # print(boro_change_rate_year)
+                year_change_rate = get_change_rate(int(this_nbh.loc[this_nbh['Year']==i, type]), int(this_nbh.loc[this_nbh['Year']==i+1, type])) - boro_change_rate_year
 
                 # the column name
-                label = str(this_nbh.loc[i][3]) + '-' + str(this_nbh.loc[i + 1][3])
+                label = str(i) + '-' + str(i+1)
                 if label not in res_df.columns:
-                    res_df.insert(res_df.shape[1], label, np.nan)
-                for j in range(len(data), list(res_df.columns).index(label) + 1):
-                    if j == list(res_df.columns).index(label):
-                        data.append(year_change_rate)
-                    else: data.append(np.nan)
+                    res_df.insert(res_df.shape[1], label, 0)
+                data.append(year_change_rate)
             
             # add data to result dataframe
             if res_df.empty:
@@ -168,6 +168,8 @@ def find_tar_nbh(df: pd.DataFrame):
     return target_nbh
 
 def get_change_rate(start: int, end: int):
+    if start == 0:
+        return end
     return (end - start) / start
 
 def numCollisions(collisionData_NBH: pd.DataFrame):
