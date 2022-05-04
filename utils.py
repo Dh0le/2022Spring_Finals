@@ -94,7 +94,7 @@ def AppendUnitPrice(data: pd.DataFrame):
         data.loc[index, 'Unit Price'] = unitPrice
 
 
-def price_change_rate_by_year(df: pd.DataFrame, boro: str):
+def price_change_rate_by_year(df: pd.DataFrame, boro: str) -> pd.DataFrame:
     """Calculate the real estate sales price change rate by year in range of given years."""
     res_df = pd.DataFrame(columns=['Borough', 'NBH', 'Overall_Change_Rate'])
     boro_change_rate = get_change_rate(df.loc[df['Sale Date'].str.contains('2012')]['Unit Price'].mean(),
@@ -199,15 +199,15 @@ def find_tar_nbh(df: pd.DataFrame):
     return target_nbh
 
 
-def get_change_rate(start: int, end: int):
+def get_change_rate(start: int, end: int) -> float:
     """return the change rate"""
     if start == 0:
         return end
     return (end - start) / start
 
 
-def numCollisions(collisionData_NBH: pd.DataFrame):
-    """find number of collision in each """
+def numCollisions(collisionData_NBH: pd.DataFrame) -> pd.DataFrame:
+    """find number of collisions in each neighborhood"""
     nbh_collisions = pd.DataFrame(
         columns=['Borough', 'NBH', 'Collisions', 'Year'])  # the number of crimes in each neighborhood from 2012 to 2019
     collision_boros = collisionData_NBH['BOROUGH'].unique()
@@ -231,12 +231,12 @@ def numCollisions(collisionData_NBH: pd.DataFrame):
 
 
 def get_collision_year(df: pd.DataFrame, year: str):
-    """process the year data of collision"""
+    """process the year data of collision and return the number of collisions in this year"""
     mask = (df['CRASH DATE'] >= year + '-01-01') & (df['CRASH DATE'] <= year + '-12-31')
     return len(df.loc[mask])
 
 
-def numCrimes(crimeData_NBH: pd.DataFrame):
+def numCrimes(crimeData_NBH: pd.DataFrame) -> pd.DataFrame:
     """calculate the number of crime in given dataframe"""
     nbh_crimes = pd.DataFrame(
         columns=['Borough', 'NBH', 'Crimes', 'Year'])  # the number of crimes in each neighborhood from 2012 to 2019
@@ -255,7 +255,7 @@ def numCrimes(crimeData_NBH: pd.DataFrame):
     return nbh_crimes
 
 
-def get_crimes_year(df: pd.DataFrame, year: str):
-    """process the year data of crime"""
+def get_crimes_year(df: pd.DataFrame, year: str) -> int:
+    """process the year data of crime and return the number of crimes in this year"""
     mask = (df['ARREST_DATE'] >= year + '-01-01') & (df['ARREST_DATE'] <= year + '-12-31')
     return len(df.loc[mask])
