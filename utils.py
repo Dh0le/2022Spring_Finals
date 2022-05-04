@@ -3,6 +3,7 @@ import json
 import numpy as np
 import glob
 import os
+import doctest
 
 WORKING_DIR = "Data/"
 START_YEAR = 2012
@@ -35,7 +36,12 @@ def get_neighborhood() -> pd.DataFrame:
 
 
 def find_neighborhood(location: tuple, borough: str, neighborhoods: pd.DataFrame) -> str:
-    """Calculate and return the neighborhood as string with given borough and location"""
+    """
+    Calculate and return the neighborhood as string with given borough and location
+    >>> neighborhoods = get_neighborhood()
+    >>> find_neighborhood((40.895437, -73.905643), 'BRONX', neighborhoods)
+    'Fieldston'
+    """
     bor = neighborhoods.loc[neighborhoods.Borough == borough, ['Borough', 'Neighborhood', 'Latitude', 'Longitude']]
     bor['Distance'] = np.square(location[0] - bor['Latitude']) + np.square(location[1] - bor['Longitude'])
     min_index = bor['Distance'].idxmin()
@@ -43,7 +49,15 @@ def find_neighborhood(location: tuple, borough: str, neighborhoods: pd.DataFrame
 
 
 def attach_NBH(data: pd.DataFrame, crime: bool, neighborhoods: pd.DataFrame):
-    """attach neighborhood data into corresponding data"""
+    """
+    attach neighborhood data into corresponding data
+    >>> d = {'LATITUDE':[40.697540],'LONGITUDE':[-73.983120]}
+    >>> neighborhoods = get_neighborhood()
+    >>> df = pd.DataFrame(data)
+    >>> attach_NBH(df, False, neighborhoods)
+    >>> print(d.loc[0, 'NBH'])
+    'Vinegar Hill'
+    """
     for index, row in data.iterrows():
         if crime:
             location = (row['Latitude'], row['Longitude'])
@@ -56,7 +70,11 @@ def attach_NBH(data: pd.DataFrame, crime: bool, neighborhoods: pd.DataFrame):
 
 
 def getNameForBorough(letter: str) -> str:
-    """Covert Initial into Borough full name"""
+    """
+    Covert Initial into Borough full name
+    >>> getNameForBorough('M')
+    'MANHATTAN'
+    """
     if letter == 'M':
         borough = 'MANHATTAN'
     elif letter == 'B':
@@ -200,14 +218,18 @@ def find_tar_nbh(df: pd.DataFrame):
 
 
 def get_change_rate(start: int, end: int) -> float:
-    """return the change rate"""
+    """
+    return the change rate
+    >>> get_change_rate(2, 1)
+    1.0
+    """
     if start == 0:
         return end
     return (end - start) / start
 
 
 def numCollisions(collisionData_NBH: pd.DataFrame) -> pd.DataFrame:
-    """find number of collisions in each neighborhood"""
+    """find number of collisions in each neighborhood and return the dataframe"""
     nbh_collisions = pd.DataFrame(
         columns=['Borough', 'NBH', 'Collisions', 'Year'])  # the number of crimes in each neighborhood from 2012 to 2019
     collision_boros = collisionData_NBH['BOROUGH'].unique()
@@ -237,7 +259,7 @@ def get_collision_year(df: pd.DataFrame, year: str):
 
 
 def numCrimes(crimeData_NBH: pd.DataFrame) -> pd.DataFrame:
-    """calculate the number of crime in given dataframe"""
+    """calculate the number of crime in given dataframe and return the dataframe"""
     nbh_crimes = pd.DataFrame(
         columns=['Borough', 'NBH', 'Crimes', 'Year'])  # the number of crimes in each neighborhood from 2012 to 2019
     crime_boros = crimeData_NBH['ARREST_BORO'].unique()
