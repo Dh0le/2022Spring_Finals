@@ -51,12 +51,17 @@ def find_neighborhood(location: tuple, borough: str, neighborhoods: pd.DataFrame
 def attach_NBH(data: pd.DataFrame, crime: bool, neighborhoods: pd.DataFrame):
     """
     attach neighborhood data into corresponding data
-    >>> d = {'LATITUDE':[40.697540],'LONGITUDE':[-73.983120]}
+    >>> d = {'LATITUDE':[40.697540],'LONGITUDE':[-73.983120],'BOROUGH':['BROOKLYN']}
     >>> neighborhoods = get_neighborhood()
-    >>> df = pd.DataFrame(data)
+    >>> df = pd.DataFrame(d)
     >>> attach_NBH(df, False, neighborhoods)
-    >>> print(d.loc[0, 'NBH'])
-    'Vinegar Hill'
+    >>> print(df.loc[0, 'NBH'])
+    Vinegar Hill
+    >>> f = {'Latitude':[40.697540],'Longitude':[-73.983120],'ARREST_BORO':['BROOKLYN']}
+    >>> df = pd.DataFrame(f)
+    >>> attach_NBH(df, True, neighborhoods)
+    >>> print(df.loc[0, 'NBH'])
+    Hunters Point
     """
     for index, row in data.iterrows():
         if crime:
@@ -74,6 +79,14 @@ def getNameForBorough(letter: str) -> str:
     Covert Initial into Borough full name
     >>> getNameForBorough('M')
     'MANHATTAN'
+    >>> getNameForBorough('B')
+    'BRONX'
+    >>> getNameForBorough('K')
+    'BROOKLYN'
+    >>> getNameForBorough('S')
+    'STATEN ISLAND'
+    >>> getNameForBorough('Q')
+    'QUEENS'
     """
     if letter == 'M':
         borough = 'MANHATTAN'
@@ -103,9 +116,14 @@ def mergeBoroughData(boroughName):
 
 
 def AppendUnitPrice(data: pd.DataFrame):
-    """Calculate unit price for real estate data and attach to dataframe"""
+    """
+    Calculate unit price for real estate data and attach to dataframe
+    >>> price = pd.read_csv('Data/price_test.csv')
+    >>> AppendUnitPrice(price)
+    >>> print(price.loc[0, 'Unit Price'])
+    112.38043823436011
+    """
     for index, row in data.iterrows():
-        print(index)
         area = row["Land Square Feet"]
         priceTotal = row["Sale Price"]
         unitPrice = priceTotal / area
@@ -113,8 +131,15 @@ def AppendUnitPrice(data: pd.DataFrame):
 
 
 def price_change_rate_by_year(df: pd.DataFrame, boro: str) -> pd.DataFrame:
-    """Calculate the real estate sales price change rate by year in range of given years."""
+    """
+    Calculate the real estate sales price change rate by year in range of given years.
+    >>> StatenData = pd.read_csv('Data/price_test.csv')
+    >>> res = price_change_rate_by_year(StatenData, 'STATEN ISLAND')
+    >>> print(res.loc[0, 'Overall_Change_Rate'])
+    nan
+    """
     res_df = pd.DataFrame(columns=['Borough', 'NBH', 'Overall_Change_Rate'])
+    df = df.dropna(subset=['Sale Date'])
     boro_change_rate = get_change_rate(df.loc[df['Sale Date'].str.contains('2012')]['Unit Price'].mean(),
                                        df.loc[df['Sale Date'].str.contains('2019')]['Unit Price'].mean())
     for nbh in df['Neighborhood'].unique():
@@ -152,7 +177,14 @@ def price_change_rate_by_year(df: pd.DataFrame, boro: str) -> pd.DataFrame:
 
 
 def change_rate_by_year(df: pd.DataFrame, boundary: int):
-    """Calculate the change rate over collision and crime"""
+    """
+    Calculate the change rate over collision and crime
+    >>> collisionData_NBH = pd.read_csv('Data/collision_nbh_test.csv')
+    >>> collisions = numCollisions(collisionData_NBH)
+    >>> res = change_rate_by_year(collisions, 0)
+    >>> print(len(res))
+    74
+    """
     res_df = pd.DataFrame(columns=['Borough', 'NBH', 'Overall_Change_Rate'])
     NBH_type = df.columns[2]
     df.iloc[:, 2:] = df.iloc[:, 2:].apply(pd.to_numeric)
@@ -221,7 +253,7 @@ def get_change_rate(start: int, end: int) -> float:
     """
     return the change rate
     >>> get_change_rate(2, 1)
-    1.0
+    -0.5
     """
     if start == 0:
         return end
@@ -229,7 +261,12 @@ def get_change_rate(start: int, end: int) -> float:
 
 
 def numCollisions(collisionData_NBH: pd.DataFrame) -> pd.DataFrame:
-    """find number of collisions in each neighborhood and return the dataframe"""
+    """
+    find number of collisions in each neighborhood and return the dataframe
+    >>> collisionData_NBH = pd.read_csv('Data/collision_nbh_test.csv')
+    >>> numCollisions(collisionData_NBH).loc[0, 'Collisions']
+    0
+    """
     nbh_collisions = pd.DataFrame(
         columns=['Borough', 'NBH', 'Collisions', 'Year'])  # the number of crimes in each neighborhood from 2012 to 2019
     collision_boros = collisionData_NBH['BOROUGH'].unique()
@@ -259,7 +296,12 @@ def get_collision_year(df: pd.DataFrame, year: str):
 
 
 def numCrimes(crimeData_NBH: pd.DataFrame) -> pd.DataFrame:
-    """calculate the number of crime in given dataframe and return the dataframe"""
+    """
+    calculate the number of crime in given dataframe and return the dataframe
+    >>> crimeData_NBH = pd.read_csv('Data/crime_test.csv')
+    >>> numCrimes(crimeData_NBH).loc[0, 'Crimes']
+    0
+    """
     nbh_crimes = pd.DataFrame(
         columns=['Borough', 'NBH', 'Crimes', 'Year'])  # the number of crimes in each neighborhood from 2012 to 2019
     crime_boros = crimeData_NBH['ARREST_BORO'].unique()
@@ -281,3 +323,7 @@ def get_crimes_year(df: pd.DataFrame, year: str) -> int:
     """process the year data of crime and return the number of crimes in this year"""
     mask = (df['ARREST_DATE'] >= year + '-01-01') & (df['ARREST_DATE'] <= year + '-12-31')
     return len(df.loc[mask])
+
+
+if __name__ == '__main__':
+    doctest.testmod()
