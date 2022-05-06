@@ -27,45 +27,49 @@ The decrease in vehicle collision and crime will positive affect the real estate
 
 ### Conclusions
 #### HYPOTHESIS 1: 
-![img_8.png](img_8.png)
+![img_8.png](Figures/img_8.png)
 
 - Reject the hypothesis: Theft-type crime has nothing todo with the estate price in neighborhood.
 
 - Special finding: theft-type crime is more likely to occur in remote areas.
 
 #### HYPOTHESIS 2: 
-![img_9.png](img_9.png)
+![img_9.png](Figures/img_9.png)
 
 - Reject the hypothesis:There is no relationship between Vehicle collisions and real estate prices.
 
 - Special finding:the num of collisions from different collision types has a significant correlation with each other.
 
 #### HYPOTHESIS 3:
-![img_10.png](img_10.png)
+![img_10.png](Figures/img_10.png)
 - Reject the hypothesis: After the first decrease curve, which may be due to the lack of previous data, there is a visible common trend for serious vehicle collisions and estate prices.
 
-![img_11.png](img_11.png)
+![img_11.png](Figures/img_11.png)
 - Special finding:heft related arrest happens more in the neighborhood with more collision.
 
 #### HYPOTHESIS 4:
 
 - The target neighborhood:
-![img_12.png](img_12.png)
-![img_13.png](img_13.png)
+![img_12.png](Figures/img_12.png)
+![img_13.png](Figures/img_13.png)
 
 
 
 - Change rate comparison
-![img_14.png](img_14.png)
-![img_15.png](img_15.png)
+![img_14.png](Figures/img_14.png)
+![img_15.png](Figures/img_15.png)
 
 - correlation calculation
 
-  - calculation method:
-  ![img_16.png](img_16.png)
+  - calculation method (Nayak & Hazra, 2011):
+  ![img_16.png](Figures/img_16.png)
   
   - calculation result:
   
-  ![img_17.png](img_17.png)
+  ![img_17.png](Figures/img_17.png)
 
 - Reject the hypothesis: did not find a consistent relationship or statistical correlation between the crime and estate price, nor between the vehicle collision and the price. 
+
+
+### Reference:
+Nayak, B. K., &amp; Hazra, A. (2011). How to choose the right statistical test? Indian Journal of Ophthalmology, 59(2), 85. https://doi.org/10.4103/0301-4738.77005 
